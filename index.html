@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="UOV — Unbalanced Oil and Vinegar. A multivariate quadratic signature scheme. NIST Additional Digital Signatures, Round 3.">
+<title>UOV — Unbalanced Oil and Vinegar</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+  :root {
+    --paper: #f4efe6;
+    --paper-2: #ebe4d6;
+    --ink: #1c1712;
+    --muted: #5c534b;
+    --faint: #8a8076;
+    --rule: #d8cec0;
+    --rule-strong: #c4b8a8;
+    --accent: #8b3d28;
+    --accent-hover: #5c2418;
+    --accent-soft: rgba(139, 61, 40, 0.08);
+    --card: #fbf7f0;
+    --shadow: 0 1px 0 rgba(28, 23, 18, 0.04);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Times New Roman", Times, serif;
+    --sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --wide: 68rem;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-offset, 5rem);
+  }
+
+  body {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    line-height: 1.75;
+    color: var(--ink);
+    background: var(--paper);
+    background-image:
+      radial-gradient(ellipse 120% 60% at 50% -10%, #faf6ee, transparent 55%);
+    min-height: 100vh;
+  }
+
+  ::selection { background: #e4d0bc; color: var(--ink); }
+
+  a {
+    color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: rgba(139, 61, 40, 0.35);
+  }
+  a:hover { color: var(--accent-hover); text-decoration-color: currentColor; }
+
+  .skip {
+    position: absolute; left: -999px; top: 0;
+    background: var(--ink); color: var(--paper); padding: 0.5rem 1rem;
+  }
+  .skip:focus { left: 1rem; top: 1rem; z-index: 200; }
+
+  header.site-header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(244, 239, 230, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .header-inner {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 0.9rem 1.5rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.65rem 1.75rem;
+  }
+
+  .wordmark {
+    font-family: var(--serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    text-decoration: none;
+    line-height: 1;
+  }
+  .wordmark:hover,
+  .wordmark.is-active { color: var(--accent); }
+
+  nav.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0;
+    align-items: center;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+  nav.site-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+  nav.site-nav a:hover { color: var(--ink); background: var(--accent-soft); }
+  nav.site-nav a.is-active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 600;
+  }
+  nav.site-nav .sep {
+    color: var(--rule-strong);
+    user-select: none;
+    font-size: 0.7rem;
+  }
+
+  main { max-width: var(--wide); margin: 0 auto; padding: 2.75rem 1.5rem 5rem; }
+
+  .page { display: none; max-width: var(--wide); }
+  .page.is-on { display: block; animation: rise 0.35s ease; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .page.is-on { animation: none; }
+  }
+
+  h1 {
+    font-size: clamp(2rem, 4.4vw, 2.85rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.1rem;
+  }
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 2.4rem 0 0.85rem;
+    padding-top: 0.4rem;
+  }
+  h3 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    margin: 1.8rem 0 0.55rem;
+  }
+
+  .lede {
+    font-size: 1.2rem;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+
+  p { margin-bottom: 1.05rem; }
+  .page p, .page li { hyphens: auto; }
+
+  ul, ol { margin: 0 0 1.2rem 1.25rem; }
+  li { margin: 0.35rem 0; }
+
+  code, .mono {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--paper-2);
+    padding: 0.08em 0.35em;
+    border-radius: 3px;
+  }
+
+  .eq {
+    margin: 1.4rem 0;
+    padding: 1.15rem 1rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    overflow-x: auto;
+    text-align: center;
+  }
+  .eq .katex-display { margin: 0; }
+
+  .katex { font-size: 1.05em; }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 2.4rem 0 2.6rem;
+    padding: 1.6rem 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .stat { min-width: 0; }
+  .stat b {
+    display: block;
+    font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .stat span {
+    display: block;
+    margin-top: 0.45rem;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  /* Changelog */
+  .log {
+    margin: 0 0 1.6rem;
+    padding: 0 0 0 1.25rem;
+    border-left: 2px solid var(--accent);
+  }
+  .log h3 { margin-top: 0; }
+  .log time {
+    display: block;
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: none;
+    color: var(--faint);
+    margin-bottom: 0.2rem;
+  }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.1rem 0 1.5rem;
+    border: 1px solid var(--rule);
+    background: var(--card);
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+  th, td {
+    padding: 0.62rem 0.8rem;
+    text-align: center;
+    vertical-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+  th {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--muted);
+    background: var(--paper-2);
+    white-space: nowrap;
+  }
+  th.math-h {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.9rem;
+  }
+  .fpga-table th, .fpga-table td {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  td.num, th.num { text-align: center; }
+  td.num[rowspan] { vertical-align: middle; }
+  td.ctr, th.ctr { text-align: center; }
+  /* Include cells that span to the bottom edge from an earlier row. */
+  tbody tr:last-child td,
+  tbody tr:nth-last-child(2) > td[rowspan="2"],
+  tbody tr:nth-last-child(3) > td[rowspan="3"],
+  tbody tr:nth-last-child(4) > td[rowspan="4"],
+  tbody tr:nth-last-child(7) > td[rowspan="7"] { border-bottom: none; }
+  tbody tr:hover td { background: var(--accent-soft); }
+  tr.cmp td { color: var(--muted); font-style: italic; }
+  .caption {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0.15rem 0 0.85rem;
+    line-height: 1.5;
+  }
+
+  .idea { font-family: var(--serif); font-size: 0.98rem; line-height: 1.6; }
+
+  /* Diagram */
+  .diagram {
+    margin: 1.4rem 0 1.6rem;
+    padding: 1.25rem 0.75rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+  }
+  .diagram svg { display: block; width: 100%; height: auto; max-width: 720px; margin: 0 auto; }
+  .diagram-cap {
+    text-align: center;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.7rem;
+  }
+
+  /* Variants */
+  .variants {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+    margin: 1.2rem 0 1.8rem;
+  }
+  .vcard {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    padding: 1.1rem 1.15rem 1.2rem;
+  }
+  .vcard h3 {
+    margin: 0 0 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .vcard p { margin: 0; font-size: 0.98rem; color: var(--muted); }
+
+  /* Bibliography */
+  .bib {
+    position: relative;
+    padding-left: 7.2rem;
+    margin: 0 0 1.35rem;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  .bib .key {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 6.7rem;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .bib .key:hover { text-decoration: underline; }
+  .bib:target {
+    background: var(--accent-soft);
+    outline: 1px solid rgba(139, 61, 40, 0.25);
+    margin-left: -0.6rem;
+    padding: 0.45rem 0.6rem 0.45rem 7.8rem;
+  }
+
+  /* Team */
+  .team {
+    margin: 1rem 0 2rem;
+    list-style: none;
+    max-width: 28rem;
+  }
+  .team li {
+    break-inside: avoid;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+  }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+  .pager a { text-decoration: none; color: var(--muted); }
+  .pager a:hover { color: var(--accent); }
+  .pager .next { margin-left: auto; text-align: right; }
+
+  footer.site-footer {
+    border-top: 1px solid var(--rule);
+    padding: 1.6rem 1.5rem 2.4rem;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.82rem;
+  }
+  .footer-inner {
+    max-width: var(--wide);
+    margin: 0 auto;
+    text-align: center;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--accent); }
+
+  .downloads a { font-weight: 600; }
+
+  @media print {
+    header.site-header { position: static; background: var(--paper); }
+    .page { display: block !important; animation: none; max-width: none; page-break-after: always; }
+    .pager, .skip { display: none; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  @media (max-width: 800px) {
+    body { font-size: 1.05rem; }
+    .stats { grid-template-columns: 1fr 1fr; gap: 1.2rem 1rem; }
+    .variants { grid-template-columns: 1fr; }
+    .bib { padding-left: 0; }
+    .bib .key { position: static; display: block; width: auto; margin-bottom: 0.2rem; }
+    .bib:target { padding-left: 0.6rem; }
+    nav.site-nav { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="wordmark" href="#home" data-page="home">UOV</a>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="#design" data-page="design">design</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="#security" data-page="security">security</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="#params" data-page="params">parameters</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="#implementations" data-page="implementations">implementations</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="#reference" data-page="reference">references</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="#team" data-page="team">team</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+<!-- HOME -->
+<article id="home" class="page" data-title="UOV — Unbalanced Oil and Vinegar">
+  <h1><center>Unbalanced Oil and Vinegar</center></h1>
+  <p class="lede">
+    UOV is a digital signature scheme that remains secure even against quantum computers. It is built from the trapdoored multivariate quadratic maps by following the hash-and-sign paradigm. First proposed by Aviad Kipnis, Jacques Patarin and Louis Goubin in 1999 [<a href="https://doi.org/10.1007/3-540-48910-X_15">KPG99</a>], it could be seen as the unbalanced version of the original OV scheme proposed by Jacques Patarin. 
+	</p>
+	
+	<p class="lede">
+    UOV has been submitted to <a href="https://csrc.nist.gov/projects/post-quantum-cryptography">NIST Post-Quantum Cryptography Project</a>, in response to NIST's <a href="https://csrc.nist.gov/Projects/pqc-dig-sig/standardization/call-for-proposals">Call for Additional Digital Signature Schemes for the PQC Standardization Process</a>. In May 2026, UOV was selected as one of the the <a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures"><strong>Round-3</strong> candidate</a> of the Additional Digital Signature Signatures for the Post-Quantum Cryptography Standardization Process. 
+  </p>
+
+  <div class="stats">
+    <div class="stat"><b>96–275&nbsp;B</b><span>small signature size</span></div>
+    <div class="stat"><b>Up to 3.4×</b><span>faster signing than Dilithium-2</span></div>
+    <div class="stat"><b>1999–</b><span>remain secure</span></div>
+    <div class="stat"><b>Wide support</b><span>x86-64, Armv8-A, Cortex-M4 and FPGA</span></div>
+  </div>
+
+  <h2>Round 1 → Round 2</h2>
+  <div class="log">
+    <!-- <time datetime="2025-02">February 2025</time> -->
+    <h3>Design</h3>
+    <p>
+      <!-- \(\mathsf{seed}_{\mathsf{pk}}\) is derived pseudorandomly from \(\mathsf{seed}_{\mathsf{sk}}\) by changing <code>Expandsk</code> so that it outputs both the trapdoor matrix \(O\) and \(\mathsf{seed}_{\mathsf{pk}}\) -->
+      The seed-expansion primitive Expandsk now derives both \(\mathsf{seed}_{\mathsf{pk}}\) and the trapdoor \(O\) from \(\mathsf{seed}_{\mathsf{sk}}\), reducing the compressed secret key from 48 to <strong>32</strong> bytes
+      [<a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-1/spec-files/mayo-spec-web.pdf">BCC+23</a>;
+      <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/lCrLRB4RzFU/m/t2WibzZrAAAJ">Sch24</a>].
+      <!-- The compressed secret key was reduced from 48 bytes to <strong>32 bytes</strong>. -->
+    </p>
+    <h3>Implementation</h3>
+    <p>An optimized x86 implementation with GFNI support was added.</p>
+  </div>
+
+  <h2>Round 2 → Round 3</h2>
+  <div class="log">
+    <!-- <time datetime="2026-08">August 2026</time> -->
+    <h3>Security</h3>
+    <p>
+      The specification now describes the wedge attack
+      [<a href="https://eprint.iacr.org/2025/1143">Ran26</a>;
+      <a href="https://eprint.iacr.org/2025/1137">JPH+26</a>;
+      <a href="https://eprint.iacr.org/2026/298">FI26</a>];
+      the direct attack estimate follows [<a href="https://eprint.iacr.org/2021/1045">Has21</a>];
+      the MEM-2D memory-aware model is used for attacks using parallelized Wiedemann-based XL (PWXL)
+      [<a href="https://eprint.iacr.org/2026/1819">DGY26</a>].
+    </p>
+    <h3>Parameters</h3>
+    <p><code>uov-Ip</code>, <code>uov-III</code>, and <code>uov-V</code> are updated in response to the wedge attack.</p>
+    <h3>Implementation</h3>
+    <p>
+      The <code>pkc+skc</code> signer computes \(v^{\top} S_i\) without forming the matrices \(S_i\)
+      [<a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-1/spec-files/qruov-spec-web.pdf">FIH+23</a>;
+      <a href="https://eprint.iacr.org/2025/1599">AUH26</a>].
+    </p>
+  </div>
+
+  <h2>Downloads</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Resource</th><th>Latest</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Specification</td>
+          <td class="downloads">
+            <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">Round-3 Specification</a><br>
+          </td>
+        </tr>
+        <tr>
+          <td>Submission</td>
+          <td class="downloads">
+            <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">Round-3 submission package</a><br>
+          </td>
+        </tr>
+        <tr>
+          <td>Implementation</td>
+          <td><a href="https://github.com/pqov">code</a>  [<a href="https://eprint.iacr.org/2023/059">BCH+23</a>]</td>
+        </tr>
+        <tr>
+          <td>NIST page</td>
+          <td><a href="https://csrc.nist.gov/projects/pqc-dig-sig/round-3-additional-signatures">Round-3 Additional Signatures — UOV</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <span></span>
+    <a class="next" href="#design">design →</a>
+  </div>
+</article>
+
+<!-- DESIGN -->
+<article id="design" class="page" data-title="Design — UOV">
+  <h1>Design</h1>
+  <p>
+    UOV is a hash-and-sign signature scheme whose public key is a trapdoored homogeneous multivariate quadratic map
+  </p>
+  <div class="eq">\[
+    \mathcal{P} = (p_1,\ldots,p_m) : \mathbb{F}_q^n \to \mathbb{F}_q^m.
+  \]</div>
+  <p>Verification evaluates \(\mathcal{P}\). Signing finds a preimage under \(\mathcal{P}\) using the trapdoor. Without the trapdoor, this is assumed to be computationally hard for appropriately chosen parameters.</p>
+
+  <h2>History</h2>
+  <p>
+    <span class="key">Pat97</span> proposed the <em>balanced</em> Oil and Vinegar scheme, with \(n = 2m\).
+    <a href="https://doi.org/10.1007/BFb0055733">KS98</a> broke that case.
+    <a href="https://doi.org/10.1007/3-540-48910-X_15">KPG99</a> answered with <strong>Unbalanced</strong> Oil and Vinegar: \(n > 2m\).
+  </p>
+
+  <h2>Trapdoor</h2>
+  <p>
+    <strong>Public key.</strong> The map \(\mathcal{P}\) above. Evaluation \(\mathbf{x} \mapsto \mathcal{P}(\mathbf{x})\) is public and efficient. Without the trapdoor, finding a preimage of a random target is the <strong>UOV problem</strong> (Definition 2 in the specification).
+  </p>
+  <p>
+    <strong>Trapdoor.</strong> An \(m\)-dimensional subspace \(O \subseteq \mathbb{F}_q^n\) — the <strong>oil space</strong> — on which \(\mathcal{P}\) vanishes: \(\mathcal{P}(\mathbf{o}) = \mathbf{0}\) for every \(\mathbf{o} \in O\).
+  </p>
+  <!-- <p>
+    Key generation samples \(O\) and a quadratic map \(\mathcal{P}\) that vanishes on \(O\). The condition \(n > 2m\) makes \(\dim O\) strictly smaller than \(\dim O^\perp\), so the attack of <a href="https://doi.org/10.1007/BFb0055733">KS98</a> is not polynomial-time.
+  </p> -->
+  <p>
+    <strong>Inversion.</strong> Since \(\mathcal{P}\) vanishes on \(O\), one has, for \(\mathbf{o} \in O\) and any \(\mathbf{x}\),
+  </p>
+  <div class="eq">\[
+    \mathcal{P}(\mathbf{o}+\mathbf{x}) = Q(\mathbf{o},\mathbf{x}) + \mathcal{P}(\mathbf{x}),
+  \]</div>
+  <p>
+    where \(Q\) is bilinear. To invert \(\mathcal{P}\) at a target \(\mathbf{t}\), sample a random vector \(\mathbf{x}\) and solve the linear system \(Q(\mathbf{o},\mathbf{x}) = \mathbf{t} - \mathcal{P}(\mathbf{x})\) for \(\mathbf{o} \in O\); then \(\mathbf{o}+\mathbf{x}\) is a preimage.
+  </p>
+  <p>
+    Without knowledge of \(O\), no efficient method is known for constructing this linear system. Recovering \(O\) from \(\mathcal{P}\) is called <strong>key recovery</strong> and enables efficient inversion of \(\mathcal{P}\). See <a href="#security">security</a> for the key-recovery attacks.
+  </p>
+
+  <h2>UOV scheme in brief</h2>
+  <p><strong>Key pair.</strong> Public \(\mathcal{P}\); trapdoor \(O\).</p>
+  <p><strong>Sign message \(\mu\).</strong> \(\mathbf{t} = \mathrm{Hash}(\mu)\); find \(\mathbf{s} \in \mathcal{P}^{-1}(\mathbf{t})\) using \(O\); output \(\mathbf{s}\).</p>
+  <p><strong>Verify.</strong> Accept iff \(\mathcal{P}(\mathbf{s}) = \mathrm{Hash}(\mu)\).</p>
+
+  <div class="pager">
+    <a href="#home">← UOV</a>
+    <a class="next" href="#security">security →</a>
+  </div>
+</article>
+
+<!-- SECURITY -->
+<article id="security" class="page" data-title="Security — UOV">
+  <h1>Security</h1>
+  <p>
+    There is no formal proof reducing a well-known hard problem, such as MQ, to the security of UOV. Concrete analysis lists the known critical attacks that affect the hardness estimate.
+  </p>
+  <p>
+    Attacks fall into two types: <strong>key recovery</strong>, which recovers the trapdoor from the public key, and <strong>forgery</strong>, which forges a message-signature pair that passes verification.
+  </p>
+
+  <h2>Forgery</h2>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr><th style="width:11rem">Attack</th><th>Idea</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Collision (§4.1)</td>
+          <td class="idea">
+            Find a match between values of \(\mathcal{P}(s)\) and \(\mathrm{Hash}(\mu \Vert \mathrm{salt})\)
+            (<a href="https://link.springer.com/chapter/10.1007/3-540-68697-5_18">OW96</a>;
+            <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/SlBu7_oITN4/m/1MW-OVyfBgAJ">SB24</a>);
+            use Gray-code enumeration to evaluate \(\mathcal{P}\)
+            (<a href="https://eprint.iacr.org/2010/313">BCC+10</a>).
+          </td>
+        </tr>
+        <tr>
+          <td>Direct (§4.2)</td>
+          <td class="idea">
+            Treat \(\mathcal{P}\) as a random underdetermined MQ instance and recover a preimage of \(\mathbf{t}=\mathrm{Hash}(\mu \Vert \mathrm{salt})\), via hybrid Wiedemann-XL, Thomae–Wolf, or Hashimoto
+            (<a href="https://iacr.org/archive/fse2007/45930292/45930292.pdf">YCBC07</a>;
+            <a href="https://doi.org/10.1007/978-3-642-30057-8_10">TW12</a>;
+            <a href="https://eprint.iacr.org/2021/1045">Has21</a>).
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Key recovery</h2>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr><th style="width:11rem">Attack</th><th>Idea</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Kipnis–Shamir (§4.3)</td>
+          <td class="idea">
+            Generalize the polynomial-time \(n=2m\) case
+            (<a href="https://doi.org/10.1007/BFb0055733">KS98</a>)
+            to \(n>2m\)
+            (<a href="https://doi.org/10.1007/978-3-642-21031-0_13">CHDY11</a>).
+          </td>
+        </tr>
+        <tr>
+          <td>Intersection (§4.4)</td>
+          <td class="idea">
+            Find \(k\) linearly independent oil-space vectors by solving a quadratic system derived from intersections of transformed oil spaces
+            (<a href="https://eprint.iacr.org/2020/1343">Beu21</a>),
+            using the reconciliation attack
+            (<a href="https://eprint.iacr.org/2008/108">DYC+08</a>).
+          </td>
+        </tr>
+        <tr>
+          <td>MinRank (§4.5)</td>
+          <td class="idea">
+            Find a minimal-rank linear combination of the public matrices
+            (<a href="https://doi.org/10.1007/3-540-44448-3_4">GC00</a>;
+            <a href="https://doi.org/10.1007/11832072_23">BG06</a>;
+            <a href="https://doi.org/10.1007/978-3-030-64837-4_17">BBC+20</a>;
+            <a href="https://link.springer.com/chapter/10.1007/978-3-030-84242-0_4">TPD21</a>;
+            <a href="https://eprint.iacr.org/2022/214">Beu22</a>;
+            <a href="https://eprint.iacr.org/2024/219">Peb25</a>;
+            <a href="https://eprint.iacr.org/2025/739">SFI+25</a>).
+            For the four recommended parameter sets, the estimated MinRank attack costs are substantially higher than those of the other attacks considered.
+          </td>
+        </tr>
+        <tr>
+          <td>Wedge (§4.6)</td>
+          <td class="idea">
+            First proposed for characteristic 2 via the exterior algebra
+            (<a href="https://eprint.iacr.org/2025/1143">Ran26</a>);
+            later extended to any characteristic
+            (<a href="https://eprint.iacr.org/2025/1137">JPH+26</a>),
+            and by combining the intersection attack with \(p^\ell\)-truncated rings
+            (<a href="https://eprint.iacr.org/2026/298">FI26</a>).
+            Hardness estimates rely on heuristic conjectures that do not always hold
+            (<a href="https://eprint.iacr.org/2025/1143">Ran26</a>;
+            <a href="https://eprint.iacr.org/2026/1548">DLT26</a>).
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <strong>MEM-2D (§4.7).</strong> The cost estimates for the direct, intersection, and wedge attacks are based on the cost of their PWXL stages. The usual cost counts only that solver's gates, treating memory as free; \(\delta_{2D}\) is the extra memory-access cost of the same solver, reported only as a sensitivity analysis
+    (<a href="https://eprint.iacr.org/2026/1819">DGY26</a>).
+  </p>
+  <p>
+    <strong>Quantum (§4.8).</strong> Known quantum attacks apply Grover’s algorithm to exhaustive-search components of classical attacks; none is known to give more than a quadratic speedup.
+  </p>
+
+  <div class="pager">
+    <a href="#design">← design</a>
+    <a class="next" href="#params">parameters →</a>
+  </div>
+</article>
+
+<!-- PARAMS -->
+<article id="params" class="page" data-title="Parameters — UOV">
+  <h1>Parameters</h1>
+  <p>
+    The parameter sets below target NIST additional-signature levels 1, 3 and 5. The estimated classical gate-count benchmarks for these levels are <strong>143</strong>, <strong>207</strong> and <strong>272</strong> bits, respectively.
+  </p>
+
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr>
+          <th>Set</th>
+          <th class="num">NIST SL</th>
+          <th class="num">n</th>
+          <th class="num">m</th>
+          <th class="num">q</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>uov-Ip</strong></td><td class="num">1</td><td class="num">119</td><td class="num">45</td><td class="num">256</td></tr>
+        <tr><td><strong>uov-Is</strong></td><td class="num">1</td><td class="num">160</td><td class="num">64</td><td class="num">16</td></tr>
+        <tr><td><strong>uov-III</strong></td><td class="num">3</td><td class="num">193</td><td class="num">72</td><td class="num">256</td></tr>
+        <tr><td><strong>uov-V</strong></td><td class="num">5</td><td class="num">259</td><td class="num">96</td><td class="num">256</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The table below gives bit-cost estimates. Base values assume free memory access. For direct, intersection and wedge attacks, the superscript \(+\delta_{2D}\) indicates the additional logarithmic cost of PWXL memory accesses under the MEM-2D model. See <a href="#security">Security</a> for descriptions of the attacks.
+  </p>
+
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr>
+          <th>Attack</th>
+          <th class="num">uov-Ip</th>
+          <th class="num">uov-Is</th>
+          <th class="num">uov-III</th>
+          <th class="num">uov-V</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Collision</td><td class="num">194</td><td class="num">143</td><td class="num">303</td><td class="num">399</td></tr>
+        <tr><td>Direct</td><td class="num">\(146^{+7}\)</td><td class="num">\(162^{+8}\)</td><td class="num">\(216^{+21}\)</td><td class="num">\(277^{+34}\)</td></tr>
+        <tr><td>KS</td><td class="num">258</td><td class="num">153</td><td class="num">420</td><td class="num">565</td></tr>
+        <tr><td>Intersection</td><td class="num">\(201^{+31}\)</td><td class="num">\(176^{+24}\)</td><td class="num">\(314^{+60}\)</td><td class="num">\(413^{+85}\)</td></tr>
+        <tr><td>Wedge</td><td class="num">\(144^{+17}\)</td><td class="num">\(158^{+22}\)</td><td class="num">\(213^{+34}\)</td><td class="num">\(272^{+48}\)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <a href="#security">← security</a>
+    <a class="next" href="#implementations">implementations →</a>
+  </div>
+</article>
+
+<!-- IMPLEMENTATIONS -->
+<article id="implementations" class="page" data-title="Implementations — UOV">
+  <h1>Implementations</h1>
+
+  <h2>Variants</h2>
+  <p>UOV has three variants. They share the same procedures and differ only in which keys are stored.</p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 430" role="img" aria-labelledby="diag-title diag-desc">
+      <title id="diag-title">UOV procedures</title>
+      <desc id="diag-desc">CompactKeyGen produces cpk and csk. ExpandPK yields epk for Verify. ExpandSK yields esk for Sign. The message μ is an input to both Sign and Verify. Sign produces the signature σ = (s, salt). Verify takes epk, μ, and σ and returns TRUE or FALSE.</desc>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1.2 L 9 5 L 0 8.8" fill="none" stroke="#8b3d28" stroke-width="1.4"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="#8b3d28" stroke-width="1.15" marker-end="url(#arr)">
+        <path d="M 296 52 H 180"/>
+        <path d="M 464 52 H 580"/>
+        <path d="M 650 76 V 202 H 450"/>
+        <path d="M 110 76 V 310 H 310"/>
+        <path d="M 230 202 H 310"/>
+        <path d="M 230 202 V 298 H 310"/>
+        <path d="M 380 226 V 286"/>
+        <path d="M 380 334 V 374"/>
+      </g>
+      <text x="235" y="42" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#5c534b">cpk</text>
+      <text x="525" y="42" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#5c534b">csk</text>
+      <text x="78" y="190" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#5c534b">epk</text>
+      <text x="682" y="150" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#5c534b">esk</text>
+      <text x="216" y="207" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#5c534b">μ</text>
+      <text x="394" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#5c534b">σ</text>
+
+      <rect x="40" y="28" width="140" height="48" rx="2" fill="#faf6ee" stroke="#8a7d6e"/>
+      <text x="110" y="57" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#1c1712">ExpandPK</text>
+
+      <rect x="296" y="28" width="168" height="48" rx="2" fill="#f3e6d8" stroke="#8b3d28"/>
+      <text x="380" y="57" text-anchor="middle" font-family="Georgia, serif" font-size="13.5" fill="#1c1712">CompactKeyGen</text>
+
+      <rect x="580" y="28" width="140" height="48" rx="2" fill="#faf6ee" stroke="#8a7d6e"/>
+      <text x="650" y="57" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#1c1712">ExpandSK</text>
+
+      <rect x="310" y="178" width="140" height="48" rx="2" fill="#f3e6d8" stroke="#8b3d28"/>
+      <text x="380" y="207" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#1c1712">Sign</text>
+
+      <rect x="310" y="286" width="140" height="48" rx="2" fill="#f3e6d8" stroke="#8b3d28"/>
+      <text x="380" y="315" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#1c1712">Verify</text>
+
+      <text x="380" y="392" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#1c1712">TRUE / FALSE</text>
+    </svg>
+    <figcaption class="diagram-cap">UOV procedures: CompactKeyGen, ExpandPK, ExpandSK, Sign, Verify</figcaption>
+  </figure>
+
+  <div class="variants">
+    <div class="vcard">
+      <h3>classic</h3>
+      <p>Key pair (<code>epk</code>, <code>esk</code>)</p>
+    </div>
+    <div class="vcard">
+      <h3>pkc</h3>
+      <p>Key pair (<code>cpk</code>, <code>esk</code>)</p>
+    </div>
+    <div class="vcard">
+      <h3>pkc+skc</h3>
+      <p>Key pair (<code>cpk</code>, <code>csk</code>)</p>
+    </div>
+  </div>
+
+  <h2>Sizes (bytes)</h2>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr>
+          <th>Set</th>
+          <th class="num">NIST SL</th>
+          <th class="num math-h">\(|\mathrm{epk}|\)</th>
+          <th class="num math-h">\(|\mathrm{esk}|\)</th>
+          <th class="num math-h">\(|\mathrm{cpk}|\)</th>
+          <th class="num math-h">\(|\mathrm{csk}|\)</th>
+          <th class="num math-h">\(|\sigma|\)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip</td><td class="num">1</td><td class="num">321 300</td><td class="num">278 087</td><td class="num">46 591</td><td class="num">32</td><td class="num">135</td></tr>
+        <tr><td>uov-Is</td><td class="num">1</td><td class="num">412 160</td><td class="num">348 704</td><td class="num">66 576</td><td class="num">32</td><td class="num">96</td></tr>
+        <tr><td>uov-III</td><td class="num">3</td><td class="num">1 347 912</td><td class="num">1 167 440</td><td class="num">189 232</td><td class="num">32</td><td class="num">209</td></tr>
+        <tr><td>uov-V</td><td class="num">5</td><td class="num">3 232 320</td><td class="num">2 801 024</td><td class="num">446 992</td><td class="num">32</td><td class="num">275</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>x86-64 AVX2</h2>
+  <p class="caption">Merged cells indicate shared implementations: signing for classic/pkc and verification for pkc/pkc+skc in the software tables below.</p>
+  <p class="caption">Intel Xeon E3-1230L v3 1.80 GHz (Haswell) and Intel Xeon E3-1275 v5 3.60 GHz (Skylake). AVX2. gcc 15.2.0, Ubuntu 24.04 LTS; turbo boost and hyper-threading disabled. Median CPU cycles: 1,000 runs each for signing and verification; 100 runs for key generation. Entries marked ∗ are from SUPERCOP.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="3" colspan="1"> Instance </th>
+          <th colspan="6">Median CPU cycles</th>
+        </tr>
+        <tr class="firstHead">
+          <th rowspan="1" colspan="3"> Haswell </th>
+          <th rowspan="1" colspan="3"> Skylake </th>
+        </tr>
+        <tr class="secondHead">
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">3 587 232</td><td rowspan="2" class="num">120 984</td><td class="num">83 724</td><td class="num">3 275 886</td><td rowspan="2" class="num">117 422</td><td class="num">74 252</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">3 537 640</td><td rowspan="2" class="num">354 036</td><td class="num">3 189 084</td><td rowspan="2" class="num">252 876</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">3 523 032</td><td class="num">573 328</td><td class="num">3 218 816</td><td class="num">471 258</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">4 895 116</td><td rowspan="2" class="num">136 712</td><td class="num">66 408</td><td class="num">4 253 780</td><td rowspan="2" class="num">120 526</td><td class="num">60 660</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">4 846 220</td><td rowspan="2" class="num">409 428</td><td class="num">4 314 950</td><td rowspan="2" class="num">286 888</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">4 362 000</td><td class="num">678 528</td><td class="num">3 978 980</td><td class="num">520 234</td></tr>
+        <tr><td>uov-III-classic</td><td class="num">22 512 648</td><td rowspan="2" class="num">326 116</td><td class="num">245 868</td><td class="num">18 459 512</td><td rowspan="2" class="num">299 814</td><td class="num">216 772</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">22 337 004</td><td rowspan="2" class="num">1 383 436</td><td class="num">18 360 852</td><td rowspan="2" class="num">967 100</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">23 996 620</td><td class="num">2 111 064</td><td class="num">18 851 832</td><td class="num">1 628 832</td></tr>
+        <tr><td>uov-V-classic</td><td class="num">66 626 076</td><td rowspan="2" class="num">673 972</td><td class="num">463 424</td><td class="num">53 227 288</td><td rowspan="2" class="num">648 574</td><td class="num">433 102</td></tr>
+        <tr><td>uov-V-pkc</td><td class="num">65 580 064</td><td rowspan="2" class="num">3 183 152</td><td class="num">51 692 258</td><td rowspan="2" class="num">2 229 086</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">59 292 764</td><td class="num">4 499 944</td><td class="num">48 217 758</td><td class="num">3 467 808</td></tr>
+        <tr class="cmp"><td>Dilithium-2</td><td class="num">97 621∗</td><td class="num">281 078∗</td><td class="num">108 711∗</td><td class="num">70 548</td><td class="num">194 892</td><td class="num">72 633</td></tr>
+        <tr class="cmp"><td>Falcon-512</td><td class="num">19 189 801∗</td><td class="num">792 360∗</td><td class="num">103 281∗</td><td class="num">26 604 000</td><td class="num">948 132</td><td class="num">81 036</td></tr>
+        <tr class="cmp"><td>SPHINCS+-SHA2-128f-simple</td><td class="num">1 334 220</td><td class="num">33 651 546</td><td class="num">2 150 290</td><td class="num">1 510 712∗</td><td class="num">50 084 397∗</td><td class="num">2 254 495∗</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="caption">Same environment. <code>ExpandP</code> uses 4-round AES. Median CPU cycles: 1,000 runs each for signing and verification; 100 runs for key generation.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="3" colspan="1"> Instance </th>
+          <th colspan="6">Median CPU cycles</th>
+        </tr>
+        <tr class="firstHead">
+          <th rowspan="1" colspan="3"> Haswell </th>
+          <th rowspan="1" colspan="3"> Skylake </th>
+        </tr>
+        <tr class="secondHead">
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-pkc</td><td class="num">3 420 684</td><td class="num">120 844</td><td rowspan="2" class="num">199 984</td><td class="num">3 124 796</td><td class="num">117 146</td><td rowspan="2" class="num">150 196</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">3 392 256</td><td class="num">425 496</td><td class="num">3 098 444</td><td class="num">372 004</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">4 552 276</td><td class="num">136 692</td><td rowspan="2" class="num">213 804</td><td class="num">4 099 510</td><td class="num">121 118</td><td rowspan="2" class="num">156 784</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">4 312 048</td><td class="num">473 652</td><td class="num">3 769 210</td><td class="num">391 738</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">21 594 440</td><td class="num">325 428</td><td rowspan="2" class="num">732 072</td><td class="num">17 602 694</td><td class="num">296 626</td><td rowspan="2" class="num">531 830</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">23 351 324</td><td class="num">1 465 752</td><td class="num">18 883 308</td><td class="num">1 202 812</td></tr>
+        <tr><td>uov-V-pkc</td><td class="num">64 156 388</td><td class="num">675 220</td><td rowspan="2" class="num">1 619 680</td><td class="num">50 718 114</td><td class="num">640 168</td><td rowspan="2" class="num">1 175 602</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">57 938 632</td><td class="num">2 936 044</td><td class="num">47 395 648</td><td class="num">2 412 678</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="caption">AMD EPYC 9754 2.25 GHz. AVX2 vs GFNI. Same compiler flags as Haswell/Skylake. Median CPU cycles: 1,000 runs each for signing and verification; 100 runs for key generation.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="3" colspan="1"> Instance </th>
+          <th colspan="6">Median CPU cycles</th>
+        </tr>
+        <tr class="firstHead">
+          <th rowspan="1" colspan="3"> AVX2 </th>
+          <th rowspan="1" colspan="3"> GFNI </th>
+        </tr>
+        <tr class="secondHead">
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">2 250 945</td><td rowspan="2" class="num">80 550</td><td class="num">59 265</td><td class="num">1 293 255</td><td rowspan="2" class="num">51 930</td><td class="num">59 040</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">2 228 602</td><td rowspan="2" class="num">163 620</td><td class="num">1 275 570</td><td rowspan="2" class="num">163 260</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">2 230 920</td><td class="num">351 990</td><td class="num">1 275 300</td><td class="num">318 690</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">2 778 030</td><td rowspan="2" class="num">75 262</td><td class="num">46 373</td><td class="num">1 897 403</td><td rowspan="2" class="num">64 575</td><td class="num">46 058</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">2 739 263</td><td rowspan="2" class="num">178 627</td><td class="num">1 859 445</td><td rowspan="2" class="num">178 132</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">2 593 552</td><td class="num">353 970</td><td class="num">1 646 955</td><td class="num">313 493</td></tr>
+        <tr><td>uov-III-classic</td><td class="num">12 285 810</td><td rowspan="2" class="num">220 973</td><td class="num">170 145</td><td class="num">6 261 053</td><td rowspan="2" class="num">144 720</td><td class="num">171 652</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">12 215 610</td><td rowspan="2" class="num">614 633</td><td class="num">6 154 605</td><td rowspan="2" class="num">616 410</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">12 561 592</td><td class="num">1 156 117</td><td class="num">6 968 227</td><td class="num">1 028 160</td></tr>
+        <tr><td>uov-V-classic</td><td class="num">34 319 002</td><td rowspan="2" class="num">428 220</td><td class="num">307 575</td><td class="num">19 811 498</td><td rowspan="2" class="num">294 660</td><td class="num">305 617</td></tr>
+        <tr><td>uov-V-pkc</td><td class="num">34 088 242</td><td rowspan="2" class="num">1 374 008</td><td class="num">19 591 898</td><td rowspan="2" class="num">1 370 700</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">33 715 462</td><td class="num">2 242 058</td><td class="num">15 494 220</td><td class="num">1 767 915</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Armv8-A Neon</h2>
+  <p class="caption">Raspberry Pi 4B: Broadcom BCM2711 (Cortex-A72) 1.8 GHz, Neon, no AES instructions, clang 19.1.7. Apple M1: 3.2 GHz, Neon, Arm AES, Apple clang 21.0.0. Median CPU cycles: 1,000 runs each for signing and verification; 100 runs for key generation.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="3" colspan="1"> Instance </th>
+          <th colspan="6">Median CPU cycles</th>
+        </tr>
+        <tr class="firstHead">
+          <th rowspan="1" colspan="3"> Cortex-A72 </th>
+          <th rowspan="1" colspan="3"> Apple M1 </th>
+        </tr>
+        <tr class="secondHead">
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">15 077 049</td><td rowspan="2" class="num">306 615</td><td class="num">186 088</td><td class="num">1 967 954</td><td rowspan="2" class="num">65 181</td><td class="num">56 228</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">14 956 930</td><td rowspan="2" class="num">4 757 803</td><td class="num">1 949 002</td><td rowspan="2" class="num">129 561</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">14 963 282</td><td class="num">5 332 289</td><td class="num">1 949 300</td><td class="num">276 774</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">30 433 505</td><td rowspan="2" class="num">545 080</td><td class="num">151 045</td><td class="num">3 368 233</td><td rowspan="2" class="num">91 886</td><td class="num">46 887</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">30 122 976</td><td rowspan="2" class="num">5 635 489</td><td class="num">3 352 707</td><td rowspan="2" class="num">139 068</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">29 638 581</td><td class="num">6 796 861</td><td class="num">3 334 542</td><td class="num">328 381</td></tr>
+        <tr><td>uov-III-classic</td><td class="num">85 389 052</td><td rowspan="2" class="num">1 677 905</td><td class="num">648 004</td><td class="num">10 775 236</td><td rowspan="2" class="num">195 425</td><td class="num">204 193</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">83 278 149</td><td rowspan="2" class="num">21 043 833</td><td class="num">10 693 440</td><td rowspan="2" class="num">508 557</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">83 131 314</td><td class="num">22 651 588</td><td class="num">10 690 920</td><td class="num">804 582</td></tr>
+        <tr><td>uov-V-classic</td><td class="num">383 892 736</td><td rowspan="2" class="num">3 814 851</td><td class="num">1 471 972</td><td class="num">33 327 979</td><td rowspan="2" class="num">412 237</td><td class="num">419 622</td></tr>
+        <tr><td>uov-V-pkc</td><td class="num">376 752 508</td><td rowspan="2" class="num">49 273 587</td><td class="num">31 193 346</td><td rowspan="2" class="num">1 148 596</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">376 410 153</td><td class="num">54 317 859</td><td class="num">31 202 269</td><td class="num">1 732 567</td></tr>
+        <tr class="cmp"><td>Dilithium-2</td><td class="num">269 724</td><td class="num">649 230</td><td class="num">272 824</td><td class="num">71 061</td><td class="num">224 125</td><td class="num">69 792</td></tr>
+        <tr class="cmp"><td>Falcon-512</td><td class="num">—</td><td class="num">1 044 600</td><td class="num">59 900</td><td class="num">—</td><td class="num">459 200</td><td class="num">22 700</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="caption">Same environment. <code>ExpandP</code> uses 4-round AES. Median CPU cycles: 1,000 runs each for signing and verification; 100 runs for key generation.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="3" colspan="1"> Instance </th>
+          <th colspan="6">Median CPU cycles</th>
+        </tr>
+        <tr class="firstHead">
+          <th rowspan="1" colspan="3"> Cortex-A72 </th>
+          <th rowspan="1" colspan="3"> Apple M1 </th>
+        </tr>
+        <tr class="secondHead">
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+          <th> KeyGen </th>
+          <th> Sign </th>
+          <th> Verify </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-pkc</td><td class="num">12 144 991</td><td class="num">298 126</td><td rowspan="2" class="num">1 927 674</td><td class="num">1 916 034</td><td class="num">65 151</td><td rowspan="2" class="num">94 689</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">12 133 435</td><td class="num">2 485 690</td><td class="num">1 914 795</td><td class="num">241 738</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">26 615 434</td><td class="num">530 721</td><td rowspan="2" class="num">2 267 445</td><td class="num">3 299 713</td><td class="num">91 935</td><td rowspan="2" class="num">98 258</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">26 107 546</td><td class="num">3 263 817</td><td class="num">3 292 148</td><td class="num">284 705</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">71 306 157</td><td class="num">1 655 393</td><td rowspan="2" class="num">9 178 208</td><td class="num">10 534 110</td><td class="num">195 636</td><td rowspan="2" class="num">361 876</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">71 203 869</td><td class="num">10 654 573</td><td class="num">10 547 013</td><td class="num">656 363</td></tr>
+        <tr><td>uov-V-pkc</td><td class="num">347 213 415</td><td class="num">3 813 727</td><td rowspan="2" class="num">20 603 385</td><td class="num">30 848 339</td><td class="num">412 336</td><td rowspan="2" class="num">794 958</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">353 429 716</td><td class="num">26 029 873</td><td class="num">30 845 668</td><td class="num">1 370 311</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Arm Cortex-M4</h2>
+  <p class="caption">ST NUCLEO-L4R5ZI (STM32L4R5ZI Cortex-M4F, 640 KB RAM, 2 MB flash), 16 MHz. Armv7-M. Benchmarked using pqm4. Signing and verification figures are averages over 1,000 runs. Cycles in thousands (<code>k</code>). Parenthesized verification figures use public-key expansion followed by classic verification.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr>
+          <th>Instance</th>
+          <th class="num">KeyGen</th>
+          <th class="num">Sign</th>
+          <th class="num">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">178 018k</td><td rowspan="2" class="num">3 050k</td><td class="num">1 433k</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">229 685k</td><td rowspan="2" class="num">13 853k (12 776k)</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">229 685k</td><td class="num">20 300k</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">195 769k</td><td rowspan="2" class="num">2 409k</td><td class="num">616k</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">203 364k</td><td rowspan="2" class="num">16 043k (15 162k)</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">296 200k</td><td class="num">21 435k</td></tr>
+        <tr class="cmp"><td>Dilithium-2</td><td class="num">1 598k</td><td class="num">4 083k</td><td class="num">1 572k</td></tr>
+        <tr class="cmp"><td>Falcon-512</td><td class="num">163 994k</td><td class="num">39 014k</td><td class="num">473k</td></tr>
+        <tr class="cmp"><td>sphincs-sha256-128f-simple</td><td class="num">16 112k</td><td class="num">400 443k</td><td class="num">22 548k</td></tr>
+        <tr class="cmp"><td>sphincs-sha256-128s-simple</td><td class="num">1 031 755k</td><td class="num">7 848 131k</td><td class="num">7 711k</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="caption">Same environment. The combined expanded public and secret keys for <code>uov-Is</code> exceed the available RAM. KeyGen writes keys to flash. Cycles above exclude flashing.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr>
+          <th>Instance</th>
+          <th class="num">KeyGen w/o flash</th>
+          <th class="num">flashing</th>
+          <th class="num">KeyGen w/ flash</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Is-classic</td><td class="num">195 769k</td><td class="num">202 293k</td><td class="num">398 062k</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">203 364k</td><td class="num">110 741k</td><td class="num">314 105k</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">296 200k</td><td class="num">18 284k</td><td class="num">314 484k</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="caption">Same environment. <code>ExpandP</code> uses 4-round AES. Signing and verification figures are averages over 1,000 runs.</p>
+  <div class="table-wrap">
+    <table align="center" border="1" width="100%">
+      <thead>
+        <tr>
+          <th>Instance</th>
+          <th>KeyGen</th>
+          <th>Sign</th>
+          <th>Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-pkc</td><td class="num">222 969k</td><td class="num">3 084k</td><td rowspan="2" class="num">7 131k</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">222 969k</td><td class="num">13 563k</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">194 918k</td><td class="num">2 466k</td><td rowspan="2" class="num">7 593k</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">287 754k</td><td class="num">13 042k</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+
+
+  <h2>FPGA</h2>
+  <p class="caption">A custom-instruction processor supports UOV key generation, signing, and verification. Xilinx Vivado 2022.1; constrained to a 10 ns clock period. Cycle counts are from RTL simulation, with generated signatures checked against an independent C implementation.</p>
+
+  <h3>ZedBoard (Zynq-7000 Z-7020)</h3>
+
+  <!-- table 14 -->
+  <p class="caption" id="fpga-caption-14">ZedBoard (Zynq-7000 Z-7020) using low-area, non-pipelined full-round (10-round) AES. Resource utilization, estimated maximum frequency, and cycle counts for <code>uov-Ip</code> and <code>uov-Is</code>.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-14">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="4" scope="colgroup">Utilization</th>
+          <th colspan="1" scope="colgroup">Timing</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">LUTs</th>
+          <th scope="col">FFs</th>
+          <th scope="col">BRAM</th>
+          <th scope="col">DSP</th>
+          <th scope="col">Freq. (MHz)</th>
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">34 663</td><td class="num">24 113</td><td class="num">135.5</td><td class="num">2</td><td class="num">92.58</td><td class="num">4 219 103</td><td class="num">8 292</td><td class="num">7 241</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">33 123</td><td class="num">23 018</td><td class="num">93.5</td><td class="num">2</td><td class="num">92.69</td><td class="num">4 939 730</td><td class="num">8 292</td><td class="num">230 425</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">30 887</td><td class="num">23 236</td><td class="num">57.5</td><td class="num">2</td><td class="num">96.83</td><td class="num">4 465 662</td><td class="num">459 308</td><td class="num">230 425</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">44 974</td><td class="num">27 433</td><td class="num">140</td><td class="num">2</td><td class="num">92.2</td><td class="num">9 916 182</td><td class="num">13 070</td><td class="num">12 986</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">29 385</td><td class="num">25 328</td><td class="num">110</td><td class="num">2</td><td class="num">94.8</td><td class="num">11 922 375</td><td class="num">13 070</td><td class="num">284 379</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">28 947</td><td class="num">24 444</td><td class="num">66</td><td class="num">2</td><td class="num">90.8</td><td class="num">11 072 933</td><td class="num">843 885</td><td class="num">284 379</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- table 15 -->
+  <p class="caption" id="fpga-caption-15">Same platform, low-area 4-round AES. Resource utilization and timing are the same as in the table above.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-15">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">4 048 691</td><td class="num">8 292</td><td class="num">7 241</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">4 825 538</td><td class="num">8 292</td><td class="num">121 075</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">4 416 702</td><td class="num">410 348</td><td class="num">121 075</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">9 746 742</td><td class="num">13 070</td><td class="num">12 986</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">11 814 183</td><td class="num">13 070</td><td class="num">176 859</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">11 026 181</td><td class="num">797 133</td><td class="num">176 859</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- table 16 -->
+  <p class="caption" id="fpga-caption-16">Same platform, fully pipelined AES with 10 or 4 rounds.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-16">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">AES<br>rounds</th>
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="4" scope="colgroup">Utilization</th>
+          <th colspan="1" scope="colgroup">Timing</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">LUTs</th>
+          <th scope="col">FFs</th>
+          <th scope="col">BRAM</th>
+          <th scope="col">DSP</th>
+          <th scope="col">Freq. (MHz)</th>
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num" rowspan="4">10</td><td>uov-Ip-pkc</td><td class="num">39 710</td><td class="num">25 509</td><td class="num">93.5</td><td class="num">2</td><td class="num">94.12</td><td class="num">4 730 047</td><td class="num">8 292</td><td class="num">39 501</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">37 369</td><td class="num">25 685</td><td class="num">57.5</td><td class="num">2</td><td class="num">95.43</td><td class="num">4 376 387</td><td class="num">370 033</td><td class="num">39 501</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">35 786</td><td class="num">27 856</td><td class="num">110</td><td class="num">2</td><td class="num">95.5</td><td class="num">11 773 796</td><td class="num">13 070</td><td class="num">115 258</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">34 208</td><td class="num">26 974</td><td class="num">66</td><td class="num">2</td><td class="num">90.3</td><td class="num">11 008 802</td><td class="num">779 754</td><td class="num">115 258</td></tr>
+        <tr><td class="num" rowspan="4">4</td><td>uov-Ip-pkc</td><td class="num">35 131</td><td class="num">23 998</td><td class="num">93.5</td><td class="num">2</td><td class="num">91.80</td><td class="num">4 729 693</td><td class="num">8 292</td><td class="num">38 937</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">34 268</td><td class="num">24 148</td><td class="num">57.5</td><td class="num">2</td><td class="num">94.44</td><td class="num">4 376 177</td><td class="num">369 823</td><td class="num">38 937</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">31 227</td><td class="num">26 327</td><td class="num">110</td><td class="num">2</td><td class="num">94.2</td><td class="num">11 772 350</td><td class="num">13 070</td><td class="num">113 914</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">31 006</td><td class="num">25 444</td><td class="num">66</td><td class="num">2</td><td class="num">92.4</td><td class="num">11 008 124</td><td class="num">779 076</td><td class="num">113 914</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Nexys Video (Artix-7 XC7A200T)</h3>
+
+  <!-- table 17 -->
+  <p class="caption" id="fpga-caption-17">Nexys Video (Artix-7 XC7A200T) using low-area, non-pipelined full-round (10-round) AES. The <code>uov-V-pkc+skc</code> design does not fit the device; its cycle counts come from RTL simulation.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-17">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="4" scope="colgroup">Utilization</th>
+          <th colspan="1" scope="colgroup">Timing</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">LUTs</th>
+          <th scope="col">FFs</th>
+          <th scope="col">BRAM</th>
+          <th scope="col">DSP</th>
+          <th scope="col">Freq. (MHz)</th>
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-III-pkc</td><td class="num">41 108</td><td class="num">30 633</td><td class="num">348.5</td><td class="num">4</td><td class="num">96.81</td><td class="num">20 484 600</td><td class="num">21 113</td><td class="num">944 953</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">38 438</td><td class="num">29 261</td><td class="num">204.5</td><td class="num">4</td><td class="num">90.98</td><td class="num">18 660 604</td><td class="num">1 781 993</td><td class="num">944 953</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">44 687 389</td><td class="num">4 136 227</td><td class="num">2 191 474</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- table 18 -->
+  <p class="caption" id="fpga-caption-18">Same platform, low-area 4-round AES. Resource utilization is the same as the table above. <code>uov-V-pkc+skc</code> does not fit the device.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-18">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-III-pkc</td><td class="num">20 035 392</td><td class="num">21 113</td><td class="num">496 121</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">18 460 372</td><td class="num">1 581 761</td><td class="num">496 121</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">44 202 685</td><td class="num">3 651 523</td><td class="num">1 142 030</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- table 19 -->
+  <p class="caption" id="fpga-caption-19">Same platform, fully pipelined AES with 10 or 4 rounds. The <code>uov-V-pkc+skc</code> designs do not fit the device; their cycle counts come from RTL simulation.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-19">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">AES<br>rounds</th>
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="4" scope="colgroup">Utilization</th>
+          <th colspan="1" scope="colgroup">Timing</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">LUTs</th>
+          <th scope="col">FFs</th>
+          <th scope="col">BRAM</th>
+          <th scope="col">DSP</th>
+          <th scope="col">Freq. (MHz)</th>
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num" rowspan="3">10</td><td>uov-III-pkc</td><td class="num">47 492</td><td class="num">33 143</td><td class="num">348.5</td><td class="num">4</td><td class="num">98.31</td><td class="num">19 663 128</td><td class="num">21 113</td><td class="num">162 515</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">44 910</td><td class="num">31 805</td><td class="num">204.5</td><td class="num">4</td><td class="num">92.92</td><td class="num">18 295 588</td><td class="num">1 416 977</td><td class="num">162 515</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">43 801 185</td><td class="num">3 250 023</td><td class="num">361 732</td></tr>
+        <tr><td class="num" rowspan="3">4</td><td>uov-III-pkc</td><td class="num">43 096</td><td class="num">31 676</td><td class="num">348.5</td><td class="num">4</td><td class="num">95.83</td><td class="num">19 661 292</td><td class="num">21 113</td><td class="num">160 997</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">40 658</td><td class="num">30 344</td><td class="num">204.5</td><td class="num">4</td><td class="num">95.18</td><td class="num">18 294 688</td><td class="num">1 416 077</td><td class="num">160 997</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">&ndash;</td><td class="num">43 800 201</td><td class="num">3 249 039</td><td class="num">359 914</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>ZCU106 (Zynq UltraScale+ XCZU7EV)</h3>
+
+  <!-- table 20 -->
+  <p class="caption" id="fpga-caption-20">ZCU106 (Zynq UltraScale+ XCZU7EV) providing UltraRAM and using low-area, non-pipelined full-round AES.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-20">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="6" scope="colgroup">Utilization</th>
+          <th colspan="1" scope="colgroup">Timing</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">LUTs</th>
+          <th scope="col">FFs</th>
+          <th scope="col">BRAM</th>
+          <th scope="col">URAM</th>
+          <th scope="col">LUTMEM</th>
+          <th scope="col">DSP</th>
+          <th scope="col">Freq. (MHz)</th>
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">32 491</td><td class="num">23 167</td><td class="num">37</td><td class="num">12</td><td class="num">671</td><td class="num">2</td><td class="num">104.83</td><td class="num">4 219 103</td><td class="num">8 292</td><td class="num">7 241</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">31 603</td><td class="num">23 180</td><td class="num">43</td><td class="num">6</td><td class="num">664</td><td class="num">2</td><td class="num">112.51</td><td class="num">4 951 251</td><td class="num">8 292</td><td class="num">230 425</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">31 776</td><td class="num">23 268</td><td class="num">55</td><td class="num">0</td><td class="num">664</td><td class="num">2</td><td class="num">110.55</td><td class="num">4 477 183</td><td class="num">459 308</td><td class="num">230 425</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">28 226</td><td class="num">24 696</td><td class="num">30</td><td class="num">16</td><td class="num">904</td><td class="num">2</td><td class="num">114.89</td><td class="num">9 916 182</td><td class="num">13 070</td><td class="num">12 986</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">28 571</td><td class="num">24 688</td><td class="num">14</td><td class="num">12</td><td class="num">900</td><td class="num">2</td><td class="num">130.04</td><td class="num">11 945 448</td><td class="num">13 070</td><td class="num">289 756</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">28 173</td><td class="num">24 354</td><td class="num">34</td><td class="num">4</td><td class="num">313</td><td class="num">2</td><td class="num">116.67</td><td class="num">11 096 006</td><td class="num">843 885</td><td class="num">289 756</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">35 839</td><td class="num">29 289</td><td class="num">60</td><td class="num">36</td><td class="num">416</td><td class="num">4</td><td class="num">127.05</td><td class="num">20 513 725</td><td class="num">21 113</td><td class="num">944 953</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">36 130</td><td class="num">29 451</td><td class="num">60</td><td class="num">18</td><td class="num">407</td><td class="num">4</td><td class="num">122.00</td><td class="num">18 689 729</td><td class="num">1 781 993</td><td class="num">944 953</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">39 762</td><td class="num">34 345</td><td class="num">67</td><td class="num">52</td><td class="num">435</td><td class="num">4</td><td class="num">122.67</td><td class="num">44 738 894</td><td class="num">4 136 227</td><td class="num">2 191 474</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- table 21 -->
+  <p class="caption" id="fpga-caption-21">Same platform, low-area 4-round AES. Resource utilization and timing are the same as in the table above.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-21">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>uov-Ip-classic</td><td class="num">4 048 691</td><td class="num">8 292</td><td class="num">7 241</td></tr>
+        <tr><td>uov-Ip-pkc</td><td class="num">4 837 059</td><td class="num">8 292</td><td class="num">121 075</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">4 428 223</td><td class="num">410 348</td><td class="num">121 075</td></tr>
+        <tr><td>uov-Is-classic</td><td class="num">9 746 742</td><td class="num">13 070</td><td class="num">12 986</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">11 837 256</td><td class="num">13 070</td><td class="num">181 596</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">11 049 254</td><td class="num">797 133</td><td class="num">181 596</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">20 064 517</td><td class="num">21 113</td><td class="num">496 121</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">18 489 497</td><td class="num">1 581 761</td><td class="num">496 121</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">44 254 190</td><td class="num">3 651 523</td><td class="num">1 142 030</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- table 22 -->
+  <p class="caption" id="fpga-caption-22">Same platform, fully pipelined AES with 10 or 4 rounds.</p>
+  <div class="table-wrap">
+    <table class="fpga-table" align="center" border="1" width="100%" aria-describedby="fpga-caption-22">
+      <thead>
+        <tr class="firstHead">
+          <th rowspan="2" scope="col">AES<br>rounds</th>
+          <th rowspan="2" scope="col">Instance</th>
+          <th colspan="6" scope="colgroup">Utilization</th>
+          <th colspan="1" scope="colgroup">Timing</th>
+          <th colspan="3" scope="colgroup">Cycle Count</th>
+        </tr>
+        <tr class="secondHead">
+          <th scope="col">LUTs</th>
+          <th scope="col">FFs</th>
+          <th scope="col">BRAM</th>
+          <th scope="col">URAM</th>
+          <th scope="col">LUTMEM</th>
+          <th scope="col">DSP</th>
+          <th scope="col">Freq. (MHz)</th>
+          <th scope="col">KeyGen</th>
+          <th scope="col">Sign</th>
+          <th scope="col">Verify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num" rowspan="7">10</td><td>uov-Ip-pkc</td><td class="num">37 660</td><td class="num">25 809</td><td class="num">43</td><td class="num">6</td><td class="num">729</td><td class="num">2</td><td class="num">105.47</td><td class="num">4 741 568</td><td class="num">8 292</td><td class="num">39 501</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">37 584</td><td class="num">25 698</td><td class="num">55</td><td class="num">0</td><td class="num">721</td><td class="num">2</td><td class="num">115.62</td><td class="num">4 387 908</td><td class="num">370 033</td><td class="num">39 501</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">34 771</td><td class="num">27 201</td><td class="num">14</td><td class="num">12</td><td class="num">961</td><td class="num">2</td><td class="num">125.71</td><td class="num">11 796 869</td><td class="num">13 070</td><td class="num">28 820</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">33 418</td><td class="num">26 910</td><td class="num">34</td><td class="num">4</td><td class="num">373</td><td class="num">2</td><td class="num">145.62</td><td class="num">11 031 875</td><td class="num">779 754</td><td class="num">28 820</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">41 701</td><td class="num">31 905</td><td class="num">60</td><td class="num">36</td><td class="num">472</td><td class="num">4</td><td class="num">124.44</td><td class="num">19 692 253</td><td class="num">21 113</td><td class="num">162 515</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">42 317</td><td class="num">31 806</td><td class="num">60</td><td class="num">18</td><td class="num">467</td><td class="num">4</td><td class="num">111.62</td><td class="num">18 324 713</td><td class="num">1 416 977</td><td class="num">162 515</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">46 709</td><td class="num">36 863</td><td class="num">67</td><td class="num">52</td><td class="num">499</td><td class="num">4</td><td class="num">112.16</td><td class="num">43 852 690</td><td class="num">3 250 023</td><td class="num">361 732</td></tr>
+        <tr><td class="num" rowspan="7">4</td><td>uov-Ip-pkc</td><td class="num">34 589</td><td class="num">24 233</td><td class="num">43</td><td class="num">6</td><td class="num">719</td><td class="num">2</td><td class="num">101.64</td><td class="num">4 741 214</td><td class="num">8 292</td><td class="num">38 937</td></tr>
+        <tr><td>uov-Ip-pkc+skc</td><td class="num">33 462</td><td class="num">24 166</td><td class="num">55</td><td class="num">0</td><td class="num">720</td><td class="num">2</td><td class="num">103.94</td><td class="num">4 387 698</td><td class="num">369 823</td><td class="num">38 937</td></tr>
+        <tr><td>uov-Is-pkc</td><td class="num">30 580</td><td class="num">25 671</td><td class="num">14</td><td class="num">12</td><td class="num">957</td><td class="num">2</td><td class="num">144.86</td><td class="num">11 795 423</td><td class="num">13 070</td><td class="num">27 662</td></tr>
+        <tr><td>uov-Is-pkc+skc</td><td class="num">30 382</td><td class="num">25 372</td><td class="num">34</td><td class="num">4</td><td class="num">373</td><td class="num">2</td><td class="num">147.56</td><td class="num">11 031 197</td><td class="num">779 076</td><td class="num">27 662</td></tr>
+        <tr><td>uov-III-pkc</td><td class="num">37 769</td><td class="num">30 360</td><td class="num">60</td><td class="num">36</td><td class="num">464</td><td class="num">4</td><td class="num">125.58</td><td class="num">19 690 417</td><td class="num">21 113</td><td class="num">160 997</td></tr>
+        <tr><td>uov-III-pkc+skc</td><td class="num">37 645</td><td class="num">30 370</td><td class="num">60</td><td class="num">18</td><td class="num">479</td><td class="num">4</td><td class="num">110.57</td><td class="num">18 323 813</td><td class="num">1 416 077</td><td class="num">160 997</td></tr>
+        <tr><td>uov-V-pkc+skc</td><td class="num">42 698</td><td class="num">35 225</td><td class="num">67</td><td class="num">52</td><td class="num">499</td><td class="num">4</td><td class="num">112.76</td><td class="num">43 851 706</td><td class="num">3 249 039</td><td class="num">359 914</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <a href="#params">← parameters</a>
+    <a class="next" href="#reference">references →</a>
+  </div>
+</article>
+
+<!-- REFERENCE -->
+<article id="reference" class="page" data-title="References — UOV">
+  <h1>Key References</h1>
+
+  <div class="bib" id="AUH26">
+    <a class="key" href="https://eprint.iacr.org/2025/1599">[AUH26]</a>
+    Hiroshi Amagasa, Rei Ueno, Naofumi Homma. <em>AVX2 Implementation of QR-UOV for modern x86 processors</em>. IACR TCHES 2026(2), pp. 325–346, 2026. IACR Cryptology ePrint Archive, Report 2025/1599.
+  </div>
+
+  <div class="bib" id="BBC+20">
+    <a class="key" href="https://doi.org/10.1007/978-3-030-64837-4_17">[BBC+20]</a>
+    Magali Bardet, Maxime Bros, Daniel Cabarcas, Philippe Gaborit, Ray Perlner, Daniel Smith-Tone, Jean-Pierre Tillich, Javier Verbel. <em>Improvements of algebraic attacks for solving the rank decoding and MinRank problems</em>. Asiacrypt 2020, LNCS 12491, pp. 507–536. Springer, 2020.
+  </div>
+
+  <div class="bib" id="Beu21">
+    <a class="key" href="https://eprint.iacr.org/2020/1343">[Beu21]</a>
+    Ward Beullens. <em>Improved cryptanalysis of UOV and Rainbow</em>. EUROCRYPT 2021(1), LNCS 12696, pp. 348–373. Springer, 2021. IACR Cryptology ePrint Archive, Report 2020/1343.
+  </div>
+
+  <div class="bib" id="Beu22">
+    <a class="key" href="https://eprint.iacr.org/2022/214">[Beu22]</a>
+    Ward Beullens. <em>Breaking Rainbow takes a weekend on a laptop</em>. CRYPTO 2022(2), LNCS 13508, pp. 464–479. Springer, 2022. IACR Cryptology ePrint Archive, Report 2022/214.
+  </div>
+
+  <div class="bib" id="BG06">
+    <a class="key" href="https://doi.org/10.1007/11832072_23">[BG06]</a>
+    Olivier Billet, Henri Gilbert. <em>Cryptanalysis of Rainbow</em>. SCN 2006, LNCS 4116, pp. 336–347. Springer, 2006.
+  </div>
+
+  <div class="bib" id="BCH+23">
+    <a class="key" href="https://eprint.iacr.org/2023/059">[BCH+23]</a>
+    Ward Beullens, Ming-Shing Chen, Shih-Hao Hung, Matthias J. Kannwischer, Bo-Yuan Peng, Cheng-Jhih Shih, Bo-Yin Yang. <em>Oil and Vinegar: modern parameters and implementations</em>. IACR Cryptology ePrint Archive, Report 2023/059.
+  </div>
+
+  <div class="bib" id="BCC+10">
+    <a class="key" href="https://eprint.iacr.org/2010/313">[BCC+10]</a>
+    Charles Bouillaguet, Hsieh-Chung Chen, Chen-Mou Cheng, Tung Chou, Ruben Niederhagen, Adi Shamir, Bo-Yin Yang. <em>Fast exhaustive search for polynomial systems in \(\mathbb{F}_2\)</em>. CHES 2010, LNCS 6225, pp. 203–218. Springer, 2010. IACR Cryptology ePrint Archive, Report 2010/313.
+  </div>
+
+  <div class="bib" id="BCC+23">
+    <a class="key" href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-1/spec-files/mayo-spec-web.pdf">[BCC+23]</a>
+    Ward Beullens, Fabio Campos, Sofía Celi, Basil Hess, Matthias J. Kannwischer. <em>MAYO: Round 1 submission</em>. NIST PQC Additional Digital Signatures, Round 1, 2023.
+  </div>
+
+  <div class="bib" id="CHDY11">
+    <a class="key" href="https://doi.org/10.1007/978-3-642-21031-0_13">[CHDY11]</a>
+    Weiwei Cao, Lei Hu, Jintai Ding, Zhijun Yin. <em>Kipnis-Shamir attack on Unbalanced Oil-Vinegar scheme</em>. ISPEC 2011, LNCS 6672, pp. 168–180. Springer, 2011.
+  </div>
+
+  <div class="bib" id="DGY26">
+    <a class="key" href="https://eprint.iacr.org/2026/1819">[DGY26]</a>
+    Jintai Ding, Hao Guo, Bo-Yin Yang. <em>On memory effects in PWXL variants</em>. IACR Cryptology ePrint Archive, Report 2026/1819.
+  </div>
+
+  <div class="bib" id="DLT26">
+    <a class="key" href="https://eprint.iacr.org/2026/1548">[DLT26]</a>
+    Jintai Ding, Peigen Li, Siyong Tao. <em>Revisiting the wedge attack on UOV problem</em>. IACR Cryptology ePrint Archive, Report 2026/1548.
+  </div>
+
+  <div class="bib" id="DYC+08">
+    <a class="key" href="https://eprint.iacr.org/2008/108">[DYC+08]</a>
+    Jintai Ding, Bo-Yin Yang, Chia-Hsin Owen Chen, Ming-Shing Chen, Chen-Mou Cheng. <em>New differential-algebraic attacks and reparametrization of Rainbow</em>. ACNS 2008, LNCS 5037, pp. 242–257. Springer, 2008. IACR Cryptology ePrint Archive, Report 2008/108.
+  </div>
+
+  <div class="bib" id="FI26">
+    <a class="key" href="https://eprint.iacr.org/2026/298">[FI26]</a>
+    Hiroki Furue, Yasuhiko Ikematsu. <em>Key recovery attacks on UOV using \(p^\ell\)-truncated polynomial rings</em>. CRYPTO 2026, LNCS 16803, pp. 289–318. Springer, 2026. IACR Cryptology ePrint Archive, Report 2026/298.
+  </div>
+
+  <div class="bib" id="FIH+23">
+    <a class="key" href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-1/spec-files/qruov-spec-web.pdf">[FIH+23]</a>
+    Hiroki Furue, Yasuhiko Ikematsu, Fumitaka Hoshino, Tsuyoshi Takagi, Kan Yasuda, Toshiyuki Miyazawa, Tsunekazu Saito, Akira Nagai. <em>QR-UOV: Round 1 submission</em>. NIST PQC Additional Digital Signatures, Round 1, 1 June 2023.
+  </div>
+
+  <div class="bib" id="GC00">
+    <a class="key" href="https://doi.org/10.1007/3-540-44448-3_4">[GC00]</a>
+    Louis Goubin, Nicolas T. Courtois. <em>Cryptanalysis of the TTM cryptosystem</em>. Asiacrypt 2000, LNCS 1976, pp. 44–57. Springer, 2000.
+  </div>
+
+  <!-- <div class="bib" id="GJ79">
+    <a class="key" href="https://search.worldcat.org/title/4195125">[GJ79]</a>
+    Michael R. Garey, David S. Johnson. <em>Computers and intractability: A guide to the theory of NP-Completeness</em>. W. H. Freeman, 1979.
+  </div> -->
+
+  <div class="bib" id="Has21">
+    <a class="key" href="https://eprint.iacr.org/2021/1045">[Has21]</a>
+    Yasufumi Hashimoto. <em>An improvement of algorithms to solve under-defined systems of multivariate quadratic equations</em>. IACR Cryptology ePrint Archive, Report 2021/1045.
+  </div>
+
+  <div class="bib" id="JPH+26">
+    <a class="key" href="https://eprint.iacr.org/2025/1137">[JPH+26]</a>
+    Yi Jin, Yuansheng Pan, Xiaoou He, Boru Gong, Jintai Ding. <em>Security analysis on UOV families with odd characteristics: Using symmetric algebra</em>. PKC 2026, LNCS 16551, pp. 428–454. Springer, 2026. IACR Cryptology ePrint Archive, Report 2025/1137.
+  </div>
+
+  <!-- <div class="bib" id="PQM4">
+    <a class="key" href="https://github.com/mupq/pqm4">[PQM4]</a>
+    Matthias J. Kannwischer, Richard Petri, Joost Rijneveld, Peter Schwabe, Ko Stoffelen. <em>PQM4: Post-quantum crypto library for the Arm Cortex-M4.</em> Available at https://github.com/mupq/pqm4.
+  </div> -->
+
+  <div class="bib" id="KS98">
+    <a class="key" href="https://doi.org/10.1007/BFb0055733">[KS98]</a>
+    Aviad Kipnis, Adi Shamir. <em>Cryptanalysis of the Oil and Vinegar signature scheme</em>. CRYPTO 1998, LNCS 1462, pp. 257–266. Springer, 1998.
+  </div>
+
+  <div class="bib" id="KPG99">
+    <a class="key" href="https://doi.org/10.1007/3-540-48910-X_15">[KPG99]</a>
+    Aviad Kipnis, Jacques Patarin, Louis Goubin. <em>Unbalanced Oil and Vinegar signature schemes</em>. EUROCRYPT 1999, LNCS 1592, pp. 206–222. Springer, 1999.
+  </div>
+
+  <!-- <div class="bib" id="Pat95">
+    <a class="key" href="https://doi.org/10.1007/3-540-44750-4_20">[Pat95]</a>
+    Jacques Patarin. <em>Cryptanalysis of the Matsumoto and Imai public key scheme of Eurocrypt’88</em>. CRYPTO 1995, LNCS 963, pp. 248–261. Springer, 1995.
+  </div> -->
+
+  <div class="bib" id="Pat97">
+    <!-- <a class="key" href="https://cir.nii.ac.jp/crid/1571417125795682304">[Pat97]</a> -->
+    <span class="key">[Pat97]</span>
+    Jacques Patarin. <em>The oil and vinegar signature scheme</em>. Presented at the Dagstuhl Workshop on Cryptography, September 1997.
+  </div>
+
+  <div class="bib" id="Peb25">
+    <a class="key" href="https://eprint.iacr.org/2024/219">[Peb25]</a>
+    Pierre Pébereau. <em>Singular points of UOV and VOX</em>. EUROCRYPT 2025, LNCS 15606, pp. 294–323. Springer, 2025. IACR Cryptology ePrint Archive, Report 2024/219.
+  </div>
+
+  <!-- <div class="bib" id="PG97">
+    <a class="key" href="https://doi.org/10.1007/bfb0028491">[PG97]</a>
+    Jacques Patarin, Louis Goubin. <em>Trapdoor one-way permutations and multivariate polynomials</em>. ICICS 1997, LNCS 1334, pp. 356–368. Springer, 1997.
+  </div> -->
+
+  <div class="bib" id="Ran26">
+    <a class="key" href="https://eprint.iacr.org/2025/1143">[Ran26]</a>
+    Lars Ran. <em>Wedges, oil, and vinegar — An analysis of UOV in the exterior algebra</em>. EUROCRYPT 2026, LNCS 16544, pp. 363–388. Springer, 2026. IACR Cryptology ePrint Archive, Report 2025/1143.
+  </div>
+
+  <div class="bib" id="SB24">
+    <a class="key" href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/SlBu7_oITN4/m/1MW-OVyfBgAJ">[SB24]</a>
+    Markku-Juhani O. Saarinen, Ward Beullens. <em>Bit security of UOV 1.0 (and MAYO)</em>. NIST PQC forum, 3 June 2024.
+  </div>
+
+  <div class="bib" id="Sch24">
+    <a class="key" href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/lCrLRB4RzFU/m/t2WibzZrAAAJ">[Sch24]</a>
+    Sophie Schmieg. <em>Comments for round second on ramp candidate UOV</em>. NIST PQC forum, 12 December 2024.
+  </div>
+
+  <div class="bib" id="SFI+25">
+    <a class="key" href="https://eprint.iacr.org/2025/739">[SFI+25]</a>
+    Toshihiro Suzuki, Hiroki Furue, Takuma Ito, Shuhei Nakamura, Shigenori Uchiyama. <em>An Extended Rectangular MinRank Attack against UOV and Its Variants</em>. IWSEC 2025, LNCS 16208, pp. 111–130. Springer, 2025. IACR Cryptology ePrint Archive, Report 2025/739.
+  </div>
+
+  <!-- <div class="bib" id="SSH11">
+    <a class="key" href="https://doi.org/10.1007/978-3-642-25405-5_5">[SSH11]</a>
+    Koichi Sakumoto, Taizo Shirai, Harunaga Hiwatari. <em>On provable security of UOV and HFE signature schemes against chosen-message attack</em>. PQCrypto 2011, LNCS 7071, pp. 68–82. Springer, 2011.
+  </div> -->
+
+  <!-- <div class="bib" id="SLK22">
+    <a class="key" href="https://tches.iacr.org/index.php/TCHES/article/view/9296">[SLK22]</a>
+    Kyung-Ah Shim, Sangyub Lee, Namhun Koo. <em>Efficient implementations of Rainbow and UOV using AVX2.</em> IACR TCHES 2022(1), pp. 245–269, 2022.
+  </div> -->
+
+  <div class="bib" id="TPD21">
+    <a class="key" href="https://link.springer.com/chapter/10.1007/978-3-030-84242-0_4">[TPD21]</a>
+    Chengdong Tao, Albrecht Petzoldt, Jintai Ding. <em>Efficient key recovery for all HFE signature variants</em>. CRYPTO 2021(1), LNCS 12825, pp. 70–93. Springer, 2021. IACR Cryptology ePrint Archive, Report 2020/1424.
+  </div>
+
+  <div class="bib" id="TW12">
+    <a class="key" href="https://doi.org/10.1007/978-3-642-30057-8_10">[TW12]</a>
+    Enrico Thomae, Christopher Wolf. <em>Solving underdetermined systems of multivariate quadratic equations revisited</em>. PKC 2012, LNCS 7293, pp. 156–171. Springer, 2012.
+  </div>
+
+  <div class="bib" id="OW96">
+    <a class="key" href="https://link.springer.com/chapter/10.1007/3-540-68697-5_18">[OW96]</a>
+    Paul C. van Oorschot, Michael J. Wiener. <em>Improving implementable meet-in-the-middle attacks by orders of magnitude</em>. CRYPTO 1996, LNCS 1109, pp. 229–236. Springer, 1996.
+  </div>
+
+  <div class="bib" id="YCB+07">
+    <a class="key" href="https://iacr.org/archive/fse2007/45930292/45930292.pdf">[YCBC07]</a>
+    Bo-Yin Yang, Chia-Hsin Owen Chen, Daniel J. Bernstein, Jiun-Ming Chen. <em>Analysis of QUAD</em>. FSE 2007, LNCS 4593, pp. 290–308. Springer, 2007.
+  </div>
+
+  <div class="pager">
+    <a href="#implementations">← implementations</a>
+    <a class="next" href="#team">team →</a>
+  </div>
+</article>
+
+<!-- TEAM -->
+<article id="team" class="page" data-title="Submitters — UOV">
+  <h1>Submitters</h1>
+  <p>Listed alphabetically by surname.</p>
+  <ul class="team">
+    <li>Ward Beullens</li>
+    <li>Ming-Shing Chen</li>
+    <li>Jintai Ding</li>
+    <li>Boru Gong</li>
+    <li>Matthias J. Kannwischer</li>
+    <li>Jacques Patarin</li>
+    <li>Bo-Yuan Peng</li>
+    <li>Dieter Schmidt</li>
+    <li>Cheng-Jhih Shih</li>
+    <li>Chengdong Tao</li>
+    <li>Bo-Yin Yang</li>
+  </ul>
+  <div class="pager">
+    <a href="#reference">← references</a>
+    <a class="next" href="#home">UOV →</a>
+  </div>
+</article>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    Contact: <a href="mailto:uovsig@gmail.com"><code>uovsig@gmail.com</code></a>
+  </div>
+</footer>
+
+<script src="katex/katex.min.js"></script>
+<script src="katex/contrib/auto-render.min.js"></script>
+<script>
+  const PAGES = ["home", "design", "security", "params", "implementations", "reference", "team"];
+  const main = document.getElementById("main");
+  const header = document.querySelector("header.site-header");
+  let scrollFrame;
+
+  function hashTarget() {
+    const raw = (location.hash || "#home").slice(1);
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
+
+  function currentPage(targetId) {
+    if (targetId === "main") {
+      const savedPage = history.state && history.state.uovPage;
+      if (PAGES.includes(savedPage)) return savedPage;
+      const active = document.querySelector(".page.is-on");
+      return active ? active.id : "home";
+    }
+    const target = document.getElementById(targetId);
+    const page = target && target.closest(".page");
+    if (page && PAGES.includes(page.id)) return page.id;
+    // Unknown or malformed anchors fall back to the home page.
+    return "home";
+  }
+
+  function updateHeaderOffset() {
+    document.documentElement.style.setProperty("--header-offset", `${header.getBoundingClientRect().height + 12}px`);
+  }
+
+  function focusMain() {
+    main.focus({ preventScroll: true });
+    main.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function showPage(id, scrollTarget) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("is-on"));
+    const page = document.getElementById(id);
+    if (page) page.classList.add("is-on");
+    document.querySelectorAll(".wordmark, nav.site-nav a").forEach(a => {
+      a.classList.toggle("is-active", a.dataset.page === id);
+    });
+    const title = page && page.dataset.title;
+    if (title) document.title = title;
+    cancelAnimationFrame(scrollFrame);
+    scrollFrame = requestAnimationFrame(() => {
+      if (scrollTarget === main) focusMain();
+      else if (scrollTarget) scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+      else window.scrollTo({ top: 0, behavior: "instant" });
+    });
+  }
+
+  function route() {
+    const targetId = hashTarget();
+    const page = currentPage(targetId);
+    const target = PAGES.includes(targetId) ? null : document.getElementById(targetId);
+    history.replaceState({ ...history.state, uovPage: page }, "");
+    showPage(page, target);
+  }
+
+  window.addEventListener("hashchange", route);
+  document.querySelector(".skip").addEventListener("click", event => {
+    event.preventDefault();
+    cancelAnimationFrame(scrollFrame);
+    focusMain();
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+    updateHeaderOffset();
+    new ResizeObserver(updateHeaderOffset).observe(header);
+    if (!location.hash) location.replace("#home");
+    else route();
+  });
+</script>
+</body>
+</html>
